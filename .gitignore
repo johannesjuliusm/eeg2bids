@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# environments
+.env
+.venv
+env/
+venv/
+
+# Spyder / IDE
+.spyproject/
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# large BIDS data
+*.edf
+*.vhdr
+*.eeg
+*.vmrk
