@@ -1,6 +1,0 @@
-channels_file,subject,session,task,acquisition,n_channels_total,n_channels_above_threshold,bad_channels,action,reason
-/Users/jjm/Desktop/rawdata/sub-2400/ses-m1/eeg/sub-2400_ses-m1_task-sl_channels.tsv,,,,,31,0,,none,no channels above threshold
-/Users/jjm/Desktop/rawdata/sub-2402/ses-m1/eeg/sub-2402_ses-m1_task-sl_channels.tsv,sub-2402,m1,sl,,31,4,"P4, CP6, CP2, T8",dry_run,no file modified
-/Users/jjm/Desktop/rawdata/sub-2402/ses-m12/eeg/sub-2402_ses-m12_task-mem_acq-learn_channels.tsv,sub-2402,m12,mem,learn,31,1,FT10,dry_run,no file modified
-/Users/jjm/Desktop/rawdata/sub-2402/ses-m12/eeg/sub-2402_ses-m12_task-mem_acq-recall_channels.tsv,sub-2402,m12,mem,recall,31,1,FT10,dry_run,no file modified
-/Users/jjm/Desktop/rawdata/sub-2402/ses-m12/eeg/sub-2402_ses-m12_task-sl_channels.tsv,sub-2402,m12,sl,,31,1,FT10,dry_run,no file modified
