@@ -26,18 +26,18 @@ Description:
     
 Notes:
     - Make sure you are working from the right environment. If using Spyder:
-        Preferences → Python Interpreter
+      Preferences → Python Interpreter
     - Better even, create a dedicated mne/mne_bids environment and start spyder
-        from the console.
+      from the console.
     - In Spyder, first, set the working directory to your project folder.
     - Set study parameters (folder paths, study name, tasks, authors, etc.) in
-        the config.py file at the project root.
+      the config.py file at the project root.
     - If adapting this workflow for your EEG study, change the config.py file,
-        and make appropriate changes inside the update_json_sidecar function to
-        reflect your tasks. Update migrate_image_files if you have image data
-        other than .png or remove if not applicable.
+      and make appropriate changes inside the update_json_sidecar function to
+      reflect your tasks. Update migrate_image_files if you have image data
+      other than .png or remove if not applicable.
     - Subject identifiers should be in format sub-XXXX or you need to adjust
-        get_subjects_from_folders accordingly.
+      get_subjects_from_folders accordingly.
 """
 
 import os

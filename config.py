@@ -96,6 +96,7 @@ ethics = "Goethe-Universität Frankfurt am Main, Geschäfts-Nr. 2021-412"
 funding = "DFG – project number 327654276 SFB 1315"
 references_and_links = "https://www.sfb1315.de/research/b04/"
 
+
 # some fun
 try:
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
