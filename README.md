@@ -23,8 +23,8 @@ the study info.
   inside the update_json_sidecar() function to reflect your task(s). Optionally, update migrate_image_files() if  
   you have image data other than .png or if this does not apply.  
 - Subject IDs should be in format sub-XXXX or adjust get_subjects_from_folders() accordingly.  
-- Additional QC functionality enables the automatic identification and annotation of channels with bad impedance  
-  across the dataset.  
+- Additional QC functionality enables the automatic identification and annotation of channels with bad  
+  impedance across the dataset.  
 
 ## References  
 For more information on the EEG BIDS format, see the online documentation:  
