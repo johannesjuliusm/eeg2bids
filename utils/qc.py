@@ -2,11 +2,7 @@ import os
 from pathlib import Path
 import pandas as pd
 
-from mne_bids import (
-    BIDSPath,
-    read_raw_bids,
-    mark_channels
-)
+from mne_bids import BIDSPath, mark_channels
 
 
 def parse_bids_entities_from_filename(path):
@@ -43,7 +39,17 @@ def parse_bids_entities_from_filename(path):
     return entities
 
 
-def mark_bad_channels(bids_root, subject, bad_ch_names, bad_ch_descriptions=None, ch_status='bad', session=None, task=None, acquisition=None, run=None, datatype='eeg'):
+def get_bad_channels_from_tsv(bids_path):
+    channels_path = bids_path.copy().update(suffix='channels', extension='.tsv')
+    df = pd.read_csv(channels_path.fpath, sep='\t')
+
+    if 'status' not in df.columns:
+        return []
+
+    return df.loc[df['status'].fillna('').str.lower() == 'bad', 'name'].astype(str).tolist()
+
+
+def mark_bad_channels(bids_root, subject, bad_ch_names, bad_ch_descriptions=None, ch_status='bad', session=None, task=None, acquisition=None, datatype='eeg'):
     """
     Mark bad channels in the channels.tsv of a defined BIDS structure.
     This function is a wrapper for mne_bids.mark_channels().
@@ -101,12 +107,8 @@ def mark_bad_channels(bids_root, subject, bad_ch_names, bad_ch_descriptions=None
         root=bids_root,
         )
 
-    # read the data
-    raw = read_raw_bids(bids_path=bids_path, verbose=False)
-
     # read bad channels
-    bads = raw.info["bads"]
-    
+    bads = get_bad_channels_from_tsv(bids_path)
     print(
         f"\n{subject}: The following channels are currently marked as bad:\n"
         f'    {", ".join(bads) if bads else "none"}'
@@ -119,10 +121,10 @@ def mark_bad_channels(bids_root, subject, bad_ch_names, bad_ch_descriptions=None
                   descriptions=bad_ch_descriptions,
                   verbose=False)
     
-    raw = read_raw_bids(bids_path=bids_path, verbose=False)
+    bads = get_bad_channels_from_tsv(bids_path)
     print(
         f"{subject}: Updated bad channels list:\n"
-        f'    {", ".join(raw.info["bads"])}\n'
+        f'    {", ".join(bads) if bads else "none"}\n'
     )
 
 
@@ -135,18 +137,14 @@ def mark_high_impedance_channels(
     verbose=True
 ):
     """
-    Mark high-impedance channels as bad across a BIDS dataset.
-
-    This function scans all *_channels.tsv files, identifies channels with
-    impedance above the specified threshold, and calls mark_bad_channels()
-    with the appropriate BIDS entities.
+    Mark high-impedance EEG channels as bad across a BIDS dataset.
 
     Parameters
     ----------
     bids_root : str or pathlib.Path
         Root of the BIDS dataset.
     impedance_threshold : float
-        Channels with impedance greater than this value are marked bad.
+        EEG channels with impedance greater than this value are marked bad.
     dry_run : bool, default=True
         If True, only report what would be changed and do not modify files.
     status_description : str, default='impedance out of bound'
@@ -181,6 +179,7 @@ def mark_high_impedance_channels(
             'task': None,
             'acquisition': None,
             'n_channels_total': None,
+            'n_eeg_channels': 0,
             'n_channels_above_threshold': 0,
             'bad_channels': '',
             'action': 'skipped',
@@ -191,7 +190,7 @@ def mark_high_impedance_channels(
             df = pd.read_csv(channels_path, sep='\t')
             row['n_channels_total'] = len(df)
 
-            required_cols = {'name', 'impedance'}
+            required_cols = {'name', 'type', 'impedance'}
             missing_cols = required_cols.difference(df.columns)
             if missing_cols:
                 row['reason'] = f'missing required columns: {sorted(missing_cols)}'
@@ -200,24 +199,36 @@ def mark_high_impedance_channels(
                     print(f"Skipping {channels_path.name}: {row['reason']}")
                 continue
 
-            # make impedance numeric
-            df['impedance'] = pd.to_numeric(df['impedance'], errors='coerce')
+            # keep only EEG channels
+            eeg_df = df[df['type'].fillna('').str.upper() == 'EEG'].copy()
+            row['n_eeg_channels'] = len(eeg_df)
 
-            # start with high-impedance channels
-            bad_df = df[df['impedance'] > impedance_threshold].copy()
+            if eeg_df.empty:
+                row['action'] = 'none'
+                row['reason'] = 'no EEG channels found'
+                summary_rows.append(row)
+                if verbose:
+                    print(f"No EEG channels found in {channels_path.name}")
+                continue
+
+            # make impedance numeric
+            eeg_df['impedance'] = pd.to_numeric(eeg_df['impedance'], errors='coerce')
+
+            # keep only EEG channels with valid impedance values above threshold
+            bad_df = eeg_df[eeg_df['impedance'] > impedance_threshold].copy()
 
             # optionally exclude channels already marked bad
-            if only_if_not_already_bad and 'status' in df.columns:
+            if only_if_not_already_bad and 'status' in eeg_df.columns:
                 bad_df = bad_df[bad_df['status'].fillna('').str.lower() != 'bad']
 
             row['n_channels_above_threshold'] = len(bad_df)
 
             if bad_df.empty:
                 row['action'] = 'none'
-                row['reason'] = 'no channels above threshold'
+                row['reason'] = 'no EEG channels above threshold'
                 summary_rows.append(row)
                 if verbose:
-                    print(f"No high-impedance channels in {channels_path.name}")
+                    print(f"No high-impedance EEG channels in {channels_path.name}")
                 continue
 
             bad_ch_names = bad_df['name'].astype(str).tolist()
@@ -263,10 +274,10 @@ def mark_high_impedance_channels(
                     acquisition=acquisition
                 )
                 row['action'] = 'marked'
-                row['reason'] = 'channels marked bad'
+                row['reason'] = 'EEG channels marked bad'
                 if verbose:
                     print(
-                        f"Marked high impedance channels in {channels_path.name}:\n"
+                        f"Marked high impedance EEG channels in {channels_path.name}:\n"
                         f"    {', '.join(bad_ch_names)}\n"
                     )
 

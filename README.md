@@ -20,8 +20,7 @@ the study info.
 - Ideally, create a dedicated MNE environment and start your IDE (e.g., spyder) from the console.  
 - Set study parameters (folder paths, study name, tasks, authors, etc.) in the config.py file at the project root.  
 - If adapting this workflow for your EEG study, primarily change the config.py file and make appropriate changes  
-  inside the update_json_sidecar() function to reflect your task(s). Optionally, update migrate_image_files() if  
-  you have image data other than .png or if this does not apply.  
+  inside the update_json_sidecar() function to reflect your task(s).  
 - Subject IDs should be in format sub-XXXX or adjust get_subjects_from_folders() accordingly.  
 - Additional QC functionality enables the automatic identification and annotation of channels with bad  
   impedance across the dataset.  

@@ -5,7 +5,7 @@ import os
 #raw_root = "/Users/jjm/sci/memobaby/data/newdata"
 #bids_root = "/Users/jjm/sci/memobaby/data/rawdata"
 raw_root = "/Users/jjm/Desktop/newdata"
-bids_root = "/Users/jjm/Desktop/rawdata"
+bids_root = "/Users/jjm/Desktop/testdata"
 
 
 # define bids information
@@ -14,9 +14,7 @@ session_combinations = [
     ("m1", "sl", None),
     ("m12", "sl", None),
     ("m12", "mem", "learn"),
-    ("m12", "mem", "recall"),
-    ("m1", "rest", None),
-    ("m12", "rest", None)
+    ("m12", "mem", "recall")
 ]
 datatype = 'eeg'
 

@@ -1,31 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-
-def parse_bids_filename(path):
-    """
-    Parse BIDS entities from a filename stem.
-
-    Examples
-    --------
-    sub-001_ses-01_task-sl_eeg.tsv
-    sub-001_ses-01_space-Captrak_electrodes.tsv
-    """
-    stem = path.stem
-    parts = stem.split('_')
-
-    entities = {}
-    suffix = None
-
-    for part in parts:
-        if '-' in part:
-            key, value = part.split('-', 1)
-            entities[key] = value
-        else:
-            suffix = part
-
-    entities['suffix'] = suffix
-    return entities
+from utils.bids import parse_bids_filename
 
 
 def find_matching_electrodes_file(channels_path, electrodes_files):
@@ -263,3 +239,74 @@ def delete_redundant_captrak_files(bids_root, dry_run=True):
             })
 
     return results
+
+
+def clean_impedance_column(bids_root, verbose=True):
+    """
+    Normalize impedance column in all channels.tsv files:
+    - replace empty strings / placeholders with NaN
+    - ensure numeric dtype where possible
+    """
+    bids_root = Path(bids_root)
+    channels_files = sorted(bids_root.rglob('*_channels.tsv'))
+    
+    print("\nMaking sure impedance columns are in numerical format ...\n")
+
+    for path in channels_files:
+        df = pd.read_csv(path, sep='\t', dtype=str)
+
+        if 'impedance' not in df.columns:
+            continue
+
+        # clean values
+        df['impedance'] = (
+            df['impedance']
+            .astype(str)
+            .str.strip()
+            .replace({
+                '': pd.NA,
+                'nan': pd.NA,
+                'NaN': pd.NA,
+                'n/a': pd.NA,
+                'N/A': pd.NA
+            })
+        )
+
+        # convert to numeric where possible
+        df['impedance'] = pd.to_numeric(df['impedance'], errors='coerce')
+
+        df.to_csv(path, sep='\t', index=False)
+
+        if verbose:
+            print(f"Cleaned impedance column in {path.name}")
+
+
+def remove_misc_channels_from_electrodes(bids_root, verbose=True):
+    """
+    Remove rows from all *_electrodes.tsv files that do not have valid x/y/z coordinates.
+    """
+    bids_root = Path(bids_root)
+    electrodes_files = sorted(bids_root.rglob('*_electrodes.tsv'))
+    
+    print("\nRemoving non-EEG recording channels from _electrodes.tsv files ...\n")
+
+    for path in electrodes_files:
+        df = pd.read_csv(path, sep='\t')
+
+        original_len = len(df)
+
+        # force coordinates to numeric; invalid entries become NaN
+        for col in ['x', 'y', 'z']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
+        # keep only rows with complete coordinates
+        if all(col in df.columns for col in ['x', 'y', 'z']):
+            df = df.dropna(subset=['x', 'y', 'z']).copy()
+
+        removed = original_len - len(df)
+
+        df.to_csv(path, sep='\t', index=False)
+
+        if verbose:
+            print(f'{path.name}: removed {removed} rows with missing coordinates')

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import shutil
 from mne.io import read_raw_brainvision
 from mne_bids import (
@@ -9,6 +10,32 @@ from mne_bids import (
     update_sidecar_json
 )
 from config import sidecar_entries, task_info_sl, task_info_mem
+
+
+def parse_bids_filename(path):
+    """
+    Parse BIDS entities from a filename stem.
+
+    Examples
+    --------
+    sub-001_ses-01_task-sl_eeg.tsv
+    sub-001_ses-01_space-Captrak_electrodes.tsv
+    """
+    stem = path.stem
+    parts = stem.split('_')
+
+    entities = {}
+    suffix = None
+
+    for part in parts:
+        if '-' in part:
+            key, value = part.split('-', 1)
+            entities[key] = value
+        else:
+            suffix = part
+
+    entities['suffix'] = suffix
+    return entities
 
 
 def update_json_sidecar(entries, bids_root, subject,
@@ -99,33 +126,71 @@ def migrate_image_files(raw_root, bids_root, subject=None, session=None, task=No
     """
     print("\nMigrating image files ...\n")
     
+    allowed_extensions = {'.png', '.jpg', '.jpeg'}
+    
     # validate parameters
     if not os.path.exists(raw_root):
         raise FileNotFoundError(f"Raw data directory '{raw_root}' not found.")
     if not os.path.exists(bids_root):
         raise FileNotFoundError(f"BIDS parent directory '{bids_root}' not found.")
+    
+    sub_value = subject.replace('sub-', '') if subject is not None else None
+    ses_value = session.replace('ses-', '') if session is not None else None
+    acq_value = acquisition.replace('acq-', '') if acquisition is not None else None
 
     # define paths
     dir_raw_data = os.path.join(raw_root, subject)
-    dir_new_bids = os.path.join(bids_root, subject, "ses-" + session, datatype)
+    dir_new_bids = os.path.join(
+        bids_root,
+        subject,
+        f"ses-{ses_value}" if ses_value is not None else '',
+        datatype
+    )
+    os.makedirs(dir_new_bids, exist_ok=True)
     
     # validate source directory
     if not os.path.exists(dir_raw_data):
         raise FileNotFoundError(f"Raw data directory for subject '{subject}' not found.")
 
     # find image files matching the criteria
-    png_files = [
-        f for f in os.listdir(dir_raw_data)
-        if f.endswith('.png')
-        and (session is None or session in f)
-        and (task is None or task in f)
-        and (acquisition is None or acquisition in f)
-    ]
+    png_files = []
+    
+    for f in os.listdir(dir_raw_data):
+        ext = Path(f).suffix.lower()
+        if ext not in allowed_extensions:
+            continue
+    
+        entities = parse_bids_filename(Path(f))
+    
+        if sub_value is not None and entities.get('sub') != sub_value:
+            continue
+    
+        if ses_value is not None and entities.get('ses') != ses_value:
+            continue
+    
+        if task is not None and entities.get('task') != task:
+            continue
+    
+        if acq_value is not None and entities.get('acq') != acq_value:
+            continue
+    
+        png_files.append(f)
     
     # copy image files
     for png_file in png_files:
+        
         source_path = os.path.join(dir_raw_data, png_file)
-        target_path = os.path.join(dir_new_bids, f"{png_file}")
+        
+        # rename photo to make sure end in suffix "_photo"
+        base, ext = os.path.splitext(f)
+        ext = ext.lower()
+        
+        if not base.endswith('_photo'):
+            target_name = f'{base}_photo{ext}'
+        else:
+            target_name = f
+        
+        target_path = os.path.join(dir_new_bids, target_name)
         try:
             shutil.copyfile(source_path, target_path)
             print(f"Copied '{source_path}' to '{target_path}'")
@@ -224,7 +289,7 @@ def convert_to_bids(raw_root, bids_root, subjects,
                     # continue with next subject
                     input(f"\nPress <Enter> to convert the next subject ({i+2}/{len(subjects)}) to BIDS\n")
                 else:
-                    print("\nAll subjects have been processed.\n")
+                    print("\nAll subjects have been processed.")
                 
             except Exception as e:
                 print(f"An error occurred: {e}")
@@ -237,9 +302,9 @@ def convert_to_bids(raw_root, bids_root, subjects,
                 # continue with next subject
                 input(f"\nPress <Enter> to convert the next subject ({i+2}/{len(subjects)}) to BIDS\n")
             else:
-                print("\nAll subjects have been processed. \n")
+                print("\nAll subjects have been processed.")
             
-    print("\nData for all subjects has been converted.\n")
+    print("\n>>>Data for all subjects have been converted.<<<\n")
 
 
 def create_bidsignore(bids_root, content="**/*.png", overwrite=True):
@@ -284,10 +349,4 @@ def create_bidsignore(bids_root, content="**/*.png", overwrite=True):
     except PermissionError as e:
         raise PermissionError(f"Permission error: {e}")
     else:
-        print(f".bidsignore file created with content: '{content}'")
-
-
-
-
-
-
+        print(f".bidsignore file created with content:\n'{content}'\n")

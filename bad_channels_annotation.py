@@ -74,50 +74,6 @@ summary.to_csv(output_path / 'high_impedance_channel_marking_summary.csv', index
 # space to manually annotate bad channels due to reasons other than impedance,
 # for example a broken electrode
 
-# sub-2400
-mark_bad_channels(
-    bids_root=bids_root,
-    subject="sub-2400",
-    bad_ch_names=[
-        "P8"
-        ],
-    bad_ch_descriptions=[
-        "impedance out of bound"
-        ],
-    ch_status="bad",
-    session="m1",
-    task="sl"
-    )
-
-# sub 2402
-mark_bad_channels(
-    bids_root=bids_root,
-    subject="sub-2402",
-    bad_ch_names=[
-        "P4", "CP6", "CP2", "T8"
-        ],
-    bad_ch_descriptions=[
-        "impedance out of bound", "impedance out of bound", "impedance out of bound", "impedance out of bound"
-        ],
-    ch_status="bad",
-    session="m1",
-    task="sl"
-    )
-
-# sub-2404
-mark_bad_channels(
-    bids_root=bids_root,
-    subject="sub-2404",
-    bad_ch_names=[
-        "C3", "CP1"
-        ],
-    bad_ch_descriptions=[
-        "impedance out of bound", "impedance out of bound"
-        ],
-    ch_status="bad",
-    session="m1",
-    task="sl"
-    )
 
 # sub-2407
 mark_bad_channels(

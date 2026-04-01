@@ -34,8 +34,7 @@ Notes:
       the config.py file at the project root.
     - If adapting this workflow for your EEG study, change the config.py file,
       and make appropriate changes inside the update_json_sidecar function to
-      reflect your tasks. Update migrate_image_files if you have image data
-      other than .png or remove if not applicable.
+      reflect your tasks.
     - Subject identifiers should be in format sub-XXXX or you need to adjust
       get_subjects_from_folders accordingly.
 """
@@ -47,8 +46,12 @@ from pprint import pprint
 from config import raw_root, bids_root, session_combinations
 from utils.io_utils import get_subjects_from_folders
 from utils.pipeline import run_bids_pipeline
-from utils.cleanup import update_all_channels_with_impedance, delete_redundant_captrak_files
-
+from utils.cleanup import (
+    update_all_channels_with_impedance,
+    delete_redundant_captrak_files,
+    clean_impedance_column,
+    remove_misc_channels_from_electrodes
+)
 
 def main(clean_up=True):
     
@@ -65,10 +68,16 @@ def main(clean_up=True):
     #           and delete now redundant CapTrak files
     if clean_up:
         update_all_channels_with_impedance(bids_root=bids_root)
-        delete_redundant_captrak_files(bids_root, dry_run=False)
+        delete_redundant_captrak_files(bids_root=bids_root, dry_run=False)
+        # handle non-EEG channels with no impedances
+        clean_impedance_column(bids_root=bids_root)
+        # remove non-EEG channels from electrodes.tsv files
+        remove_misc_channels_from_electrodes(bids_root=bids_root)
 
     # display the dataset description
     dataset_description_path = os.path.join(bids_root, "dataset_description.json")
+    print("\n\n>>> ALL DATA ARE NOW IN BIDS FORMAT <<<\n\n")
+    print("STUDY INFORMATION")
     with open(dataset_description_path, "r", encoding = "utf-8") as fid:
         pprint(json.load(fid))
         
