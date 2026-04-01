@@ -182,13 +182,13 @@ def migrate_image_files(raw_root, bids_root, subject=None, session=None, task=No
         source_path = os.path.join(dir_raw_data, png_file)
         
         # rename photo to make sure end in suffix "_photo"
-        base, ext = os.path.splitext(f)
+        base, ext = os.path.splitext(png_file)
         ext = ext.lower()
         
         if not base.endswith('_photo'):
             target_name = f'{base}_photo{ext}'
         else:
-            target_name = f
+            target_name = png_file
         
         target_path = os.path.join(dir_new_bids, target_name)
         try:

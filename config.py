@@ -85,8 +85,8 @@ Prof. Dr. Yee Lee Shing, Goethe-Universität Frankfurt am Main. \
 Study team: Johannes Julius Mohn, Martin Bauer, Franziska Gronow, Katharina Pittner, Amy Halbing, Isabelle Anne-Claire Périard. \
 Students: Janna Pauline Dirks, Valentina Pittol Nercolini, Joseph Ventura Kieninger, Lea Lowak, Moritz Doerr.\
 """,
-acknowledgements_2 = """Thank you to the student interns who helped with data collection: \
-Collin Brennan, Anna Mangels, Anna Melnik, Lea Nierlich, Svenja Otter, Eliana Ramos, Kira Raedler, \
+acknowledgements_2 = """Thank you to the student interns who helped with data collection and processing: \
+Rümeysa E. Bagcioglu, Collin Brennan, Anna Mangels, Anna Melnik, Lea Nierlich, Svenja Otter, Eliana Ramos, Kira Raedler, \
 Tom Schroeder, Aldiyar Sopybek, Alaa Tabaa, Nhu Ha Tran.
 """,
 data_license_type = "CCO"
